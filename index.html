@@ -3,342 +3,230 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Control de Asistencia QR v1.1</title>
-  
+  <title>Sistema de Control de Asistencia QR</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Html5-QRCode Scanner Library (Versión Estable) -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
-  
-  <!-- QRCode.js Library para generar QRs -->
+  <!-- HTML5-QRCode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <!-- QRCode.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <style>
-    @media print {
-      body * { visibility: hidden; }
-      #printable-area, #printable-area * { visibility: visible; }
-      #printable-area { position: absolute; left: 0; top: 0; width: 100%; }
-    }
-    /* Estilos para asegurar respuesta fluida del canvas del escáner */
-    #reader video {
-      object-fit: cover !important;
-      border-radius: 0.5rem;
-    }
-  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans flex flex-col min-h-screen">
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col font-sans">
 
-  <!-- Header -->
-  <header class="bg-indigo-700 text-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold flex items-center gap-2">
-        <i class="fa-solid fa-qrcode"></i> Control de Asistencia QR <span class="text-xs bg-indigo-900 px-2 py-0.5 rounded-full border border-indigo-400">v1.1</span>
-      </h1>
-      <span id="clock" class="text-sm font-mono bg-indigo-800 px-3 py-1 rounded-full border border-indigo-500">
-        --:--:--
-      </span>
+  <!-- TOP NAVIGATION -->
+  <header class="bg-indigo-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-qrcode text-3xl text-indigo-200"></i>
+        <h1 class="text-xl font-bold tracking-wide">Control de Asistencia QR</h1>
+      </div>
+      <!-- Tabs Navigation -->
+      <nav class="flex space-x-1 sm:space-x-2 bg-indigo-800 p-1 rounded-lg text-sm font-medium">
+        <button onclick="switchTab('tab-escaner')" id="btn-tab-escaner" class="tab-btn px-3 py-1.5 rounded-md transition-colors bg-indigo-600 text-white shadow">
+          <i class="fa-solid fa-camera mr-1"></i> Escáner
+        </button>
+        <button onclick="switchTab('tab-registro')" id="btn-tab-registro" class="tab-btn px-3 py-1.5 rounded-md transition-colors hover:text-indigo-200 text-indigo-100">
+          <i class="fa-solid fa-user-plus mr-1"></i> Registro
+        </button>
+        <button onclick="switchTab('tab-reportes')" id="btn-tab-reportes" class="tab-btn px-3 py-1.5 rounded-md transition-colors hover:text-indigo-200 text-indigo-100">
+          <i class="fa-solid fa-chart-line mr-1"></i> Reportes
+        </button>
+      </nav>
     </div>
   </header>
 
-  <!-- Navegación por pestañas -->
-  <nav class="bg-indigo-800 text-white shadow-inner">
-    <div class="max-w-7xl mx-auto px-2 flex overflow-x-auto space-x-1 sm:space-x-4 text-xs sm:text-sm font-medium">
-      <button onclick="switchTab('escaner')" id="tab-escaner" class="tab-btn px-4 py-3 flex items-center gap-2 border-b-4 border-white font-bold bg-indigo-900 focus:outline-none">
-        <i class="fa-solid fa-camera"></i> <span>Escáner</span>
-      </button>
-      <button onclick="switchTab('gestion')" id="tab-gestion" class="tab-btn px-4 py-3 flex items-center gap-2 border-b-4 border-transparent hover:bg-indigo-700 focus:outline-none">
-        <i class="fa-solid fa-users"></i> <span>Estudiantes & Cursos</span>
-      </button>
-      <button onclick="switchTab('generador')" id="tab-generador" class="tab-btn px-4 py-3 flex items-center gap-2 border-b-4 border-transparent hover:bg-indigo-700 focus:outline-none">
-        <i class="fa-solid fa-id-card"></i> <span>Credenciales QR</span>
-      </button>
-      <button onclick="switchTab('horarios')" id="tab-horarios" class="tab-btn px-4 py-3 flex items-center gap-2 border-b-4 border-transparent hover:bg-indigo-700 focus:outline-none">
-        <i class="fa-solid fa-clock"></i> <span>Horarios</span>
-      </button>
-      <button onclick="switchTab('reportes')" id="tab-reportes" class="tab-btn px-4 py-3 flex items-center gap-2 border-b-4 border-transparent hover:bg-indigo-700 focus:outline-none">
-        <i class="fa-solid fa-chart-bar"></i> <span>Reportes</span>
-      </button>
-    </div>
-  </nav>
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
 
-  <!-- Contenedor Principal -->
-  <main class="flex-grow max-w-7xl w-full mx-auto p-4">
+    <!-- 1. TAB ESCÁNER -->
+    <section id="tab-escaner" class="tab-content block space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Scanner Column -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-5 border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+            <i class="fa-solid fa-barcode text-indigo-600 mr-2"></i> Escanear Código QR
+          </h2>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="hidden fixed top-5 right-5 z-50 flex items-center p-4 mb-4 text-white rounded-lg shadow-lg transition-all duration-300">
-      <span id="toast-icon" class="mr-3 text-xl"></span>
-      <span id="toast-message" class="text-sm font-medium"></span>
-    </div>
-
-    <!-- PESTAÑA 1: ESCÁNER QR -->
-    <section id="sec-escaner" class="tab-content space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Panel del Lector -->
-        <div class="md:col-span-2 bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-bolt text-amber-500"></i> Escáner Ultrarrápido
-            </h2>
-            <div class="flex items-center gap-2">
-              <label class="text-xs font-semibold text-gray-500">Tipo Marcado:</label>
-              <select id="scan-tipo" class="text-sm border border-gray-300 rounded-md p-1 bg-gray-50 font-medium">
+          <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tipo de Registro</label>
+              <select id="scan-tipo" class="w-full border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-indigo-500">
                 <option value="Entrada">Entrada</option>
                 <option value="Salida">Salida</option>
               </select>
             </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Cámara Activa</label>
+              <select id="camera-select" class="w-full border-slate-300 rounded-lg p-2.5 bg-slate-50 border focus:ring-2 focus:ring-indigo-500">
+                <option value="">Cargando cámaras...</option>
+              </select>
+            </div>
           </div>
 
-          <!-- Visor de Cámara con Marco de Escaneo -->
-          <div id="reader" class="w-full bg-black rounded-lg overflow-hidden min-h-[320px] shadow-inner border border-gray-800"></div>
+          <!-- Video Stream Container -->
+          <div class="relative bg-slate-900 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center border-2 border-dashed border-slate-300">
+            <div id="reader" class="w-full"></div>
+          </div>
 
           <div class="mt-4 flex gap-3">
-            <button onclick="startScanner()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 px-4 rounded-lg font-medium shadow flex items-center justify-center gap-2 transition">
-              <i class="fa-solid fa-play"></i> Iniciar Cámara
+            <button id="btn-start-scanner" onclick="startScanner()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center">
+              <i class="fa-solid fa-play mr-2"></i> Iniciar Escáner
             </button>
-            <button onclick="stopScanner()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg font-medium shadow flex items-center justify-center gap-2 transition">
-              <i class="fa-solid fa-stop"></i> Detener
+            <button id="btn-stop-scanner" onclick="stopScanner()" class="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-lg shadow transition flex items-center justify-center hidden">
+              <i class="fa-solid fa-stop mr-2"></i> Detener
             </button>
           </div>
         </div>
 
-        <!-- Registro Reciente -->
-        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col">
-          <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-history text-indigo-600"></i> Marcados Recientes
-          </h2>
-          <div id="recent-logs" class="flex-grow overflow-y-auto max-h-[380px] space-y-3">
-            <p class="text-gray-400 text-sm text-center py-8">Esperando escaneo...</p>
+        <!-- Manual Input / Status Column -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+            <h3 class="text-md font-bold text-slate-700 mb-3">Ingreso Manual</h3>
+            <div class="space-y-3">
+              <input type="text" id="manual-codigo" placeholder="Código de Estudiante" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+              <button onclick="marcarManual()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition">
+                Marcar Asistencia
+              </button>
+            </div>
+          </div>
+
+          <div id="last-scan-card" class="bg-white rounded-xl shadow-md p-5 border border-slate-200 hidden">
+            <h3 class="text-md font-bold text-slate-700 mb-2">Último Registro</h3>
+            <div id="last-scan-details" class="text-sm space-y-1"></div>
           </div>
         </div>
-
       </div>
     </section>
 
-    <!-- PESTAÑA 2: GESTIÓN DE ESTUDIANTES Y CURSOS -->
-    <section id="sec-gestion" class="tab-content hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 2. TAB REGISTRO -->
+    <section id="tab-registro" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div class="space-y-6">
-          <!-- Crear Curso -->
-          <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-              <i class="fa-solid fa-folder-plus text-indigo-600"></i> Nuevo Curso
-            </h3>
-            <form id="form-curso" onsubmit="guardarCurso(event)" class="space-y-3">
+        <!-- Formulario Curso -->
+        <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+            <i class="fa-solid fa-graduation-cap text-indigo-600 mr-2"></i> Registrar Curso
+          </h2>
+          <form onsubmit="event.preventDefault(); guardarCurso();" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nombre del Curso</label>
+              <input type="text" id="curso-nombre" required placeholder="Ej: 3ro Secundaria A" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Turno</label>
+              <select id="curso-turno" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                <option value="Mañana">Mañana</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noche">Noche</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
+              Guardar Curso
+            </button>
+          </form>
+        </div>
+
+        <!-- Formulario Estudiante -->
+        <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+            <i class="fa-solid fa-user-graduate text-indigo-600 mr-2"></i> Registrar Estudiante
+          </h2>
+          <form onsubmit="event.preventDefault(); guardarEstudiante();" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label class="text-xs font-semibold text-gray-600">Nombre del Curso</label>
-                <input type="text" id="curso-nombre" required class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. 1ro Secundaria">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Código Único</label>
+                <input type="text" id="est-codigo" required placeholder="Ej: EST-1001" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
               </div>
               <div>
-                <label class="text-xs font-semibold text-gray-600">Turno Asignado</label>
-                <select id="curso-turno" class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Nombre Completo</label>
+                <input type="text" id="est-nombre" required placeholder="Ej: Juan Pérez" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Curso</label>
+                <select id="est-curso" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                  <option value="">Seleccione Curso</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Turno</label>
+                <select id="est-turno" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
                   <option value="Mañana">Mañana</option>
                   <option value="Tarde">Tarde</option>
+                  <option value="Noche">Noche</option>
                 </select>
               </div>
-              <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition">
-                Guardar Curso
-              </button>
-            </form>
-          </div>
-
-          <!-- Registrar Estudiante -->
-          <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
-              <i class="fa-solid fa-user-plus text-indigo-600"></i> Nuevo Estudiante
-            </h3>
-            <form id="form-estudiante" onsubmit="guardarEstudiante(event)" class="space-y-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Código Único (RUN/DNI)</label>
-                <input type="text" id="est-codigo" required class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="EST-001">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Nombre Completo</label>
-                <input type="text" id="est-nombre" required class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Juan Pérez">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Curso</label>
-                <select id="est-curso" required class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
-                  <!-- Carga dinámica -->
-                </select>
-              </div>
-              <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition">
-                Registrar Estudiante
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <!-- Tabla Estudiantes -->
-        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="font-bold text-gray-700 flex items-center gap-2">
-              <i class="fa-solid fa-list text-indigo-600"></i> Lista de Estudiantes
-            </h3>
-            <button onclick="cargarDatos()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center gap-1">
-              <i class="fa-solid fa-sync"></i> Actualizar
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
+              Guardar Estudiante
             </button>
-          </div>
-          <div class="overflow-x-auto max-h-[500px]">
-            <table class="w-full text-left border-collapse text-sm">
-              <thead class="bg-gray-100 text-gray-600 sticky top-0">
-                <tr>
-                  <th class="p-3 border-b">Código</th>
-                  <th class="p-3 border-b">Estudiante</th>
-                  <th class="p-3 border-b">Curso</th>
-                  <th class="p-3 border-b">Turno</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-estudiantes-body" class="divide-y">
-                <!-- Datos dinámicos -->
-              </tbody>
-            </table>
-          </div>
+          </form>
         </div>
 
       </div>
-    </section>
 
-    <!-- PESTAÑA 3: GENERADOR DE QRS -->
-    <section id="sec-generador" class="tab-content hidden space-y-6">
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-address-card text-indigo-600"></i> Credenciales de Estudiantes
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label class="text-xs font-semibold text-gray-600">Seleccionar Estudiante</label>
-            <select id="qr-select-estudiante" onchange="renderizarCredencial()" class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
-              <!-- Carga dinámica -->
-            </select>
-          </div>
-          <div class="flex items-end">
-            <button onclick="window.print()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded-lg font-medium shadow flex items-center justify-center gap-2">
-              <i class="fa-solid fa-print"></i> Imprimir Credencial
-            </button>
-          </div>
-        </div>
-
-        <!-- Vista previa credencial -->
-        <div class="flex justify-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-          <div id="printable-area" class="w-80 bg-white border-2 border-indigo-600 rounded-2xl shadow-xl p-6 text-center space-y-4">
-            <div class="border-b pb-2">
-              <h4 class="font-bold text-indigo-700 text-lg">CREDENCIAL ESCOLAR</h4>
-              <p class="text-xs text-gray-400 uppercase tracking-widest">Control de Asistencia</p>
-            </div>
-            <div id="qrcode" class="flex justify-center my-2"></div>
-            <div>
-              <h5 id="card-nombre" class="font-bold text-gray-800 text-base">---</h5>
-              <p id="card-curso" class="text-xs text-indigo-600 font-semibold">---</p>
-              <p id="card-codigo" class="text-xs text-gray-400 font-mono mt-1">---</p>
-            </div>
+      <!-- Carnet / QR Card Generator Output -->
+      <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-700 mb-4">Generador de Tarjeta QR</h2>
+        <div class="flex flex-col sm:flex-row items-center gap-6">
+          <div id="qrcode" class="p-3 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
+          <div id="qr-info" class="text-sm space-y-2 text-slate-600">
+            <p class="italic text-slate-400">Seleccione o busque un estudiante registrado para generar su QR listo para imprimir.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PESTAÑA 4: CONFIGURACIÓN DE HORARIOS -->
-    <section id="sec-horarios" class="tab-content hidden space-y-6">
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 max-w-3xl mx-auto">
-        <h2 class="text-lg font-semibold text-gray-700 mb-6 flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-indigo-600"></i> Horarios y Tolerancia
-        </h2>
-        <form id="form-horarios" onsubmit="guardarHorarios(event)" class="space-y-6">
-          <div class="p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-3">
-            <h3 class="font-bold text-amber-800 flex items-center gap-2">
-              <i class="fa-solid fa-sun"></i> Turno Mañana
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Hora Entrada</label>
-                <input type="time" id="m-entrada" value="08:00" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Tolerancia (min)</label>
-                <input type="number" id="m-tolerancia" value="10" min="0" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Hora Salida</label>
-                <input type="time" id="m-salida" value="13:00" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 bg-indigo-50 rounded-lg border border-indigo-200 space-y-3">
-            <h3 class="font-bold text-indigo-800 flex items-center gap-2">
-              <i class="fa-solid fa-moon"></i> Turno Tarde
-            </h3>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Hora Entrada</label>
-                <input type="time" id="t-entrada" value="14:00" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Tolerancia (min)</label>
-                <input type="number" id="t-tolerancia" value="10" min="0" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-gray-600">Hora Salida</label>
-                <input type="time" id="t-salida" value="18:30" class="w-full p-2 border rounded-lg text-sm bg-white">
-              </div>
-            </div>
-          </div>
-
-          <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-medium shadow transition">
-            Guardar Configuración
-          </button>
-        </form>
-      </div>
-    </section>
-
-    <!-- PESTAÑA 5: REPORTES E INFORMES -->
-    <section id="sec-reportes" class="tab-content hidden space-y-6">
-      <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-file-invoice text-indigo-600"></i> Informes de Asistencia
+    <!-- 3. TAB REPORTES -->
+    <section id="tab-reportes" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
+        <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+          <i class="fa-solid fa-filter text-indigo-600 mr-2"></i> Filtros del Reporte
         </h2>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
-            <label class="text-xs font-semibold text-gray-600">Fecha Inicio</label>
-            <input type="date" id="rep-fecha-inicio" class="w-full p-2 border rounded-lg text-sm mt-1">
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha Inicio</label>
+            <input type="date" id="rep-fecha-inicio" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
           </div>
           <div>
-            <label class="text-xs font-semibold text-gray-600">Fecha Fin</label>
-            <input type="date" id="rep-fecha-fin" class="w-full p-2 border rounded-lg text-sm mt-1">
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Fecha Fin</label>
+            <input type="date" id="rep-fecha-fin" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
           </div>
           <div>
-            <label class="text-xs font-semibold text-gray-600">Curso</label>
-            <select id="rep-curso" class="w-full p-2 border rounded-lg text-sm mt-1">
-              <option value="">Todos los cursos</option>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Curso</label>
+            <select id="rep-curso" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+              <option value="">Todos los Cursos</option>
             </select>
-          </div>
-          <div class="flex items-end">
-            <button onclick="generarInforme()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium shadow">
-              <i class="fa-solid fa-filter"></i> Filtrar
-            </button>
           </div>
         </div>
 
-        <div class="overflow-x-auto max-h-[400px]">
+        <button onclick="generarInforme()" class="w-full sm:w-auto px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
+          <i class="fa-solid fa-magnifying-glass mr-2"></i> Generar Reporte
+        </button>
+      </div>
+
+      <!-- Tabla de Resultados -->
+      <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse text-sm">
-            <thead class="bg-gray-100 text-gray-600 sticky top-0">
+            <thead class="bg-slate-100 text-slate-600 uppercase text-xs font-semibold border-b border-slate-200">
               <tr>
-                <th class="p-3 border-b">Fecha</th>
-                <th class="p-3 border-b">Hora</th>
-                <th class="p-3 border-b">Estudiante</th>
-                <th class="p-3 border-b">Curso</th>
-                <th class="p-3 border-b">Tipo</th>
-                <th class="p-3 border-b">Estado</th>
+                <th class="p-3">Fecha</th>
+                <th class="p-3">Hora</th>
+                <th class="p-3">Estudiante</th>
+                <th class="p-3">Curso</th>
+                <th class="p-3">Tipo</th>
+                <th class="p-3">Estado</th>
               </tr>
             </thead>
-            <tbody id="tabla-reportes-body" class="divide-y">
-              <!-- Carga dinámica -->
+            <tbody id="tabla-reportes-body" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="6" class="p-4 text-center text-slate-400">Seleccione los filtros y presione "Generar Reporte"</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -347,336 +235,236 @@
 
   </main>
 
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 z-50 flex items-center space-x-2">
+    <span id="toast-message">Mensaje</span>
+  </div>
+
+  <!-- SCRIPT LÓGICA -->
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxLqClQt6Wpnn5gsBvlO_dzIwsZ-mS4NMYELCH4RtO0TFpVj1F46hZSHlXJ8kUylCFm/exec";
+    // CONFIGURACIÓN API GOOGLE APPS SCRIPT
+    // Reemplaza con la URL pública de tu Despliegue Web Executable de Google Apps Script
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdM8Vqn18Vp9Vuz7-SX0kcUDJY1nXjKDa5DjvgIIa2PNEr3JVW7vrFNVSOgclfA2PJ/exec";
 
-    let html5QrcodeScanner = null;
-    let estudiantes = [];
-    let cursos = [];
-    let lastScannedCode = null;
-    let lastScannedTime = 0;
+    let html5QrCode = null;
+    let listaEstudiantesCache = [];
+    let listaCursosCache = [];
 
-    let horariosConfig = {
-      manana: { entrada: "08:00", tolerancia: 10, salida: "13:00" },
-      tarde: { entrada: "14:00", tolerancia: 10, salida: "18:30" }
-    };
+    // INICIALIZACIÓN
+    window.addEventListener('DOMContentLoaded', () => {
+      cargarCursos();
+      cargarEstudiantes();
+      inicializarEscanerCamaras();
+    });
 
-    window.onload = () => {
-      startClock();
-      cargarDatos();
-    };
-
-    function startClock() {
-      setInterval(() => {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString();
-      }, 1000);
-    }
-
+    // PESTAÑAS Y NAVEGACIÓN
     function switchTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('border-white', 'bg-indigo-900', 'font-bold');
-        btn.classList.add('border-transparent');
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+        el.classList.add('hover:text-indigo-200', 'text-indigo-100');
       });
 
-      document.getElementById(`sec-${tabId}`).classList.remove('hidden');
-      const activeBtn = document.getElementById(`tab-${tabId}`);
-      activeBtn.classList.add('border-white', 'bg-indigo-900', 'font-bold');
-      activeBtn.classList.remove('border-transparent');
+      document.getElementById(tabId).classList.remove('hidden');
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+      activeBtn.classList.remove('hover:text-indigo-200', 'text-indigo-100');
 
-      if (tabId !== 'escaner') {
+      if (tabId !== 'tab-escaner' && html5QrCode && html5QrCode.isScanning) {
         stopScanner();
       }
     }
 
+    // PETICIONES API REST
     async function apiPost(action, payload = {}) {
       try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          mode: 'cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action, payload })
         });
         return await response.json();
-      } catch (error) {
+      } catch (err) {
+        console.error("Error en API:", err);
         showToast("Error de conexión con el servidor", "error");
-        return { status: "error" };
+        return { status: 'error', message: err.toString() };
       }
     }
 
-    async function cargarDatos() {
-      showToast("Sincronizando información...", "info");
-      
-      const resCursos = await apiPost('obtenerCursos');
-      if (resCursos.data) {
-        cursos = resCursos.data;
-        poblarSelectsCursos();
+    // CARGA DE DATOS DESDE HOJA DE CÁLCULO
+    async function cargarCursos() {
+      const res = await apiPost('obtenerCursos');
+      if (res.status === 'success' && res.data) {
+        listaCursosCache = res.data;
+        const selectEst = document.getElementById('est-curso');
+        const selectRep = document.getElementById('rep-curso');
+        
+        selectEst.innerHTML = '<option value="">Seleccione Curso</option>';
+        selectRep.innerHTML = '<option value="">Todos los Cursos</option>';
+
+        res.data.forEach(c => {
+          selectEst.innerHTML += `<option value="${c.nombre}">${c.nombre} (${c.turno})</option>`;
+          selectRep.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
+        });
       }
+    }
 
-      const resEst = await apiPost('obtenerEstudiantes');
-      if (resEst.data) {
-        estudiantes = resEst.data;
-        renderizarTablaEstudiantes();
-        poblarSelectEstudiantes();
+    async function cargarEstudiantes() {
+      const res = await apiPost('obtenerEstudiantes');
+      if (res.status === 'success' && res.data) {
+        listaEstudiantesCache = res.data;
       }
-
-      showToast("Sistema listo", "success");
     }
 
-    function poblarSelectsCursos() {
-      const selectEst = document.getElementById('est-curso');
-      const selectRep = document.getElementById('rep-curso');
-      selectEst.innerHTML = '<option value="">Seleccione Curso</option>';
-      selectRep.innerHTML = '<option value="">Todos los cursos</option>';
-
-      cursos.forEach(c => {
-        selectEst.innerHTML += `<option value="${c.nombre}">${c.nombre} (${c.turno})</option>`;
-        selectRep.innerHTML += `<option value="${c.nombre}">${c.nombre}</option>`;
-      });
-    }
-
-    function poblarSelectEstudiantes() {
-      const select = document.getElementById('qr-select-estudiante');
-      select.innerHTML = '<option value="">Seleccione Estudiante</option>';
-      estudiantes.forEach(e => {
-        select.innerHTML += `<option value="${e.codigo}">${e.nombre} - ${e.curso}</option>`;
-      });
-    }
-
-    function renderizarTablaEstudiantes() {
-      const tbody = document.getElementById('tabla-estudiantes-body');
-      tbody.innerHTML = '';
-      estudiantes.forEach(e => {
-        tbody.innerHTML += `
-          <tr class="hover:bg-gray-50">
-            <td class="p-3 font-mono font-semibold text-xs text-indigo-600">${e.codigo}</td>
-            <td class="p-3 font-medium">${e.nombre}</td>
-            <td class="p-3">${e.curso}</td>
-            <td class="p-3"><span class="px-2 py-1 text-xs rounded-full ${e.turno === 'Mañana' ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">${e.turno}</span></td>
-          </tr>
-        `;
-      });
-    }
-
-    async function guardarCurso(e) {
-      e.preventDefault();
+    // REGISTRO DE CURSO Y ESTUDIANTE
+    async function guardarCurso() {
       const payload = {
         nombre: document.getElementById('curso-nombre').value,
         turno: document.getElementById('curso-turno').value
       };
+      showToast("Guardando curso...", "info");
       const res = await apiPost('registrarCurso', payload);
       if (res.status === 'success') {
-        showToast("Curso guardado", "success");
-        document.getElementById('form-curso').reset();
-        cargarDatos();
-      }
-    }
-
-    async function guardarEstudiante(e) {
-      e.preventDefault();
-      const cursoSeleccionado = cursos.find(c => c.nombre === document.getElementById('est-curso').value);
-      const payload = {
-        codigo: document.getElementById('est-codigo').value.trim(),
-        nombre: document.getElementById('est-nombre').value.trim(),
-        curso: document.getElementById('est-curso').value,
-        turno: cursoSeleccionado ? cursoSeleccionado.turno : 'Mañana'
-      };
-      const res = await apiPost('registrarEstudiante', payload);
-      if (res.status === 'success') {
-        showToast("Estudiante guardado", "success");
-        document.getElementById('form-estudiante').reset();
-        cargarDatos();
+        showToast(res.message, "success");
+        document.getElementById('curso-nombre').value = '';
+        cargarCursos();
       } else {
         showToast(res.message, "error");
       }
     }
 
-    // --- CONFIGURACIÓN DE ESCÁNER ALTA VELOCIDAD ---
-    function startScanner() {
-      if (html5QrcodeScanner) return;
-
-      html5QrcodeScanner = new Html5Qrcode("reader");
-
-      // Función dinámica para adaptar la caja de lectura según el tamaño de la pantalla
-      const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-        const qrboxSize = Math.floor(minEdge * 0.75); // 75% del área activa
-        return {
-          width: qrboxSize,
-          height: qrboxSize
-        };
+    async function guardarEstudiante() {
+      const payload = {
+        codigo: document.getElementById('est-codigo').value,
+        nombre: document.getElementById('est-nombre').value,
+        curso: document.getElementById('est-curso').value,
+        turno: document.getElementById('est-turno').value
       };
+      showToast("Guardando estudiante...", "info");
+      const res = await apiPost('registrarEstudiante', payload);
+      if (res.status === 'success') {
+        showToast(res.message, "success");
+        generarQRVisor(payload.codigo, payload.nombre);
+        cargarEstudiantes();
+      } else {
+        showToast(res.message, "error");
+      }
+    }
 
-      const config = {
-        fps: 30, // Lectura fluida a 30 FPS
-        qrbox: qrboxFunction,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true // Aceleración por Hardware si está disponible
+    function generarQRVisor(codigo, nombre) {
+      const qrDiv = document.getElementById('qrcode');
+      qrDiv.innerHTML = '';
+      new QRCode(qrDiv, { text: codigo, width: 128, height: 128 });
+      document.getElementById('qr-info').innerHTML = `
+        <p class="font-bold text-slate-800">${nombre}</p>
+        <p class="text-xs font-mono text-indigo-600">${codigo}</p>
+      `;
+    }
+
+    // ESCÁNER QR CON CÁMARA
+    function inicializarEscanerCamaras() {
+      Html5Qrcode.getCameras().then(devices => {
+        const camSelect = document.getElementById('camera-select');
+        camSelect.innerHTML = '';
+        if (devices && devices.length) {
+          devices.forEach(device => {
+            camSelect.innerHTML += `<option value="${device.id}">${device.label || 'Cámara ' + device.id}</option>`;
+          });
+        } else {
+          camSelect.innerHTML = '<option value="">No se encontraron cámaras</option>';
         }
-      };
+      }).catch(err => {
+        console.error("Error al detectar cámaras", err);
+      });
+    }
 
-      html5QrcodeScanner.start(
-        { facingMode: "environment" }, // Cámara trasera activa
-        config,
+    function startScanner() {
+      const selectedCameraId = document.getElementById('camera-select').value;
+      if (!selectedCameraId) {
+        showToast("Seleccione una cámara válida", "error");
+        return;
+      }
+
+      html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
+        selectedCameraId,
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess
-      ).catch(err => {
-        showToast("Error al activar la cámara: " + err, "error");
+      ).then(() => {
+        document.getElementById('btn-start-scanner').classList.add('hidden');
+        document.getElementById('btn-stop-scanner').classList.remove('hidden');
       });
     }
 
     function stopScanner() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.stop().then(() => {
-          html5QrcodeScanner = null;
-          document.getElementById('reader').innerHTML = '';
-        }).catch(() => {
-          html5QrcodeScanner = null;
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          document.getElementById('btn-start-scanner').classList.remove('hidden');
+          document.getElementById('btn-stop-scanner').classList.add('hidden');
         });
       }
     }
 
-    function playAudioBeep() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = "sine";
-        osc.frequency.value = 880; // Tono agudo y rápido
-        gain.gain.setValueAtTime(0.4, ctx.currentTime);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.12);
-      } catch (e) {
-        console.log("Audio no permitido aún");
-      }
-    }
-
     function onScanSuccess(decodedText) {
-      const codigoProcesado = decodedText.trim();
-      const now = Date.now();
-
-      // Control anti-repetición de 2.5 segundos
-      if (codigoProcesado === lastScannedCode && (now - lastScannedTime) < 2500) {
-        return;
-      }
-      lastScannedCode = codigoProcesado;
-      lastScannedTime = now;
-
-      playAudioBeep();
-      procesarMarcadoAsistencia(codigoProcesado);
+      procesarAsistencia(decodedText.trim());
     }
 
-    async function procesarMarcadoAsistencia(codigo) {
-      const estudiante = estudiantes.find(e => e.codigo.toString().trim() === codigo);
+    function marcarManual() {
+      const cod = document.getElementById('manual-codigo').value.trim();
+      if (cod) {
+        procesarAsistencia(cod);
+        document.getElementById('manual-codigo').value = '';
+      }
+    }
+
+    async function procesarAsistencia(codigoEstudiante) {
+      const estudiante = listaEstudiantesCache.find(e => e.codigo.toString() === codigoEstudiante.toString());
       if (!estudiante) {
-        showToast(`Código ${codigo} no registrado`, "error");
+        showToast("Código no registrado en el sistema", "error");
         return;
       }
 
-      const tipo = document.getElementById('scan-tipo').value;
       const ahora = new Date();
-      const horaActualStr = ahora.toTimeString().substring(0, 5);
-      
-      const turnoConfig = estudiante.turno === 'Mañana' ? horariosConfig.manana : horariosConfig.tarde;
-      let estado = "A Tiempo";
+      const fecha = ahora.toISOString().split('T')[0];
+      const hora = ahora.toTimeString().split(' ')[0];
+      const tipo = document.getElementById('scan-tipo').value;
 
-      if (tipo === "Entrada") {
-        const [hEnt, mEnt] = turnoConfig.entrada.split(':').map(Number);
-        const limite = new Date();
-        limite.setHours(hEnt, mEnt + parseInt(turnoConfig.tolerancia), 59);
-        
-        if (ahora > limite) {
-          estado = "Con Atraso";
-        }
+      // Evaluar Estado: A Tiempo o Atraso (Ejemplo: Entrada después de las 08:00:00 es Atraso)
+      let estado = 'A Tiempo';
+      if (tipo === 'Entrada' && hora > '08:00:00') {
+        estado = 'Atraso';
       }
 
       const payload = {
-        fecha: ahora.toLocaleDateString(),
-        hora: horaActualStr,
+        fecha,
+        hora,
         codigo: estudiante.codigo,
         estudiante: estudiante.nombre,
         curso: estudiante.curso,
-        tipo: tipo,
-        estado: estado
+        tipo,
+        estado
       };
 
+      showToast("Registrando asistencia...", "info");
       const res = await apiPost('marcarAsistencia', payload);
-      
+
       if (res.status === 'success') {
-        showToast(`¡MARCADO! ${estudiante.nombre} (${estado})`, estado === 'A Tiempo' ? 'success' : 'warning');
-        agregarLogLectura(payload);
+        showToast(res.message, "success");
+        
+        // Mostrar Card
+        const card = document.getElementById('last-scan-card');
+        card.classList.remove('hidden');
+        document.getElementById('last-scan-details').innerHTML = `
+          <p class="font-bold text-slate-800">${estudiante.nombre}</p>
+          <p class="text-xs text-slate-500">${estudiante.curso} - ${tipo}</p>
+          <p class="text-xs font-semibold ${estado === 'A Tiempo' ? 'text-green-600' : 'text-red-600'}">${estado} (${hora})</p>
+        `;
       } else {
-        showToast(res.message || "Marcado Duplicado", "warning");
+        showToast(res.message, "error");
       }
     }
 
-    function agregarLogLectura(p) {
-      const container = document.getElementById('recent-logs');
-      if (container.children[0]?.tagName === 'P') container.innerHTML = '';
-
-      const badgeColor = p.estado === 'A Tiempo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-      
-      const item = document.createElement('div');
-      item.className = 'p-3 bg-gray-50 border rounded-lg flex justify-between items-center text-xs animate-pulse';
-      item.innerHTML = `
-        <div>
-          <p class="font-bold text-gray-800">${p.estudiante}</p>
-          <p class="text-gray-500">${p.curso} • ${p.hora} (${p.tipo})</p>
-        </div>
-        <span class="px-2 py-1 rounded-full font-bold ${badgeColor}">${p.estado}</span>
-      `;
-      container.prepend(item);
-    }
-
-    // Generador de Credenciales con QR optimizado para escáneres
-    function renderizarCredencial() {
-      const codigo = document.getElementById('qr-select-estudiante').value;
-      const estudiante = estudiantes.find(e => e.codigo.toString() === codigo.toString());
-
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
-
-      if (!estudiante) {
-        document.getElementById('card-nombre').innerText = "---";
-        document.getElementById('card-curso').innerText = "---";
-        document.getElementById('card-codigo').innerText = "---";
-        return;
-      }
-
-      document.getElementById('card-nombre').innerText = estudiante.nombre;
-      document.getElementById('card-curso').innerText = estudiante.curso;
-      document.getElementById('card-codigo').innerText = estudiante.codigo;
-
-      // Generar código QR de alta resolución y con margen óptimo
-      new QRCode(qrContainer, {
-        text: estudiante.codigo.toString().trim(),
-        width: 160,
-        height: 160,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M // Nivel Medio para escaneo veloz
-      });
-    }
-
-    function guardarHorarios(e) {
-      e.preventDefault();
-      horariosConfig = {
-        manana: {
-          entrada: document.getElementById('m-entrada').value,
-          tolerancia: parseInt(document.getElementById('m-tolerancia').value),
-          salida: document.getElementById('m-salida').value
-        },
-        tarde: {
-          entrada: document.getElementById('t-entrada').value,
-          tolerancia: parseInt(document.getElementById('t-tolerancia').value),
-          salida: document.getElementById('t-salida').value
-        }
-      };
-      showToast("Configuración de horarios guardada", "success");
-    }
-
+    // CORRECCIÓN: FUNCIÓN PARA REPORTES CON MANEJO DE FECHA Y HORA
     async function generarInforme() {
       const payload = {
         fechaInicio: document.getElementById('rep-fecha-inicio').value,
@@ -692,15 +480,21 @@
 
       if (res.data && res.data.length > 0) {
         res.data.forEach(r => {
+          // Extraer fecha limpia en formato YYYY-MM-DD
+          let fechaFormateada = r.fecha;
+          if (r.fecha.includes('T')) {
+            fechaFormateada = r.fecha.split('T')[0];
+          }
+
           tbody.innerHTML += `
-            <tr class="hover:bg-gray-50">
-              <td class="p-3">${r.fecha}</td>
-              <td class="p-3 font-mono text-xs">${r.hora}</td>
+            <tr class="hover:bg-slate-50 border-b border-slate-100">
+              <td class="p-3 font-medium text-slate-700">${fechaFormateada}</td>
+              <td class="p-3 font-mono text-xs text-indigo-700 font-semibold">${r.hora}</td>
               <td class="p-3 font-medium">${r.estudiante}</td>
               <td class="p-3">${r.curso}</td>
-              <td class="p-3">${r.tipo}</td>
+              <td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-slate-100 border">${r.tipo}</span></td>
               <td class="p-3">
-                <span class="px-2 py-1 text-xs rounded-full ${r.estado === 'A Tiempo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                <span class="px-2 py-1 text-xs rounded-full font-bold ${r.estado === 'A Tiempo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                   ${r.estado}
                 </span>
               </td>
@@ -709,37 +503,27 @@
         });
         showToast("Reporte generado", "success");
       } else {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">No hay registros para este filtro</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No se encontraron registros para los filtros seleccionados</td></tr>`;
       }
     }
 
+    // COMPONENTE TOAST DE NOTIFICACIÓN
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
-      const msg = document.getElementById('toast-message');
-      const icon = document.getElementById('toast-icon');
+      const toastMsg = document.getElementById('toast-message');
+      toastMsg.innerText = message;
 
-      const colors = {
-        success: 'bg-green-600',
-        error: 'bg-red-600',
-        warning: 'bg-amber-600',
-        info: 'bg-indigo-600'
-      };
+      if (type === 'error') {
+        toast.className = "fixed bottom-5 right-5 bg-red-600 text-white px-4 py-3 rounded-lg shadow-xl opacity-100 z-50 transition-opacity duration-300";
+      } else if (type === 'success') {
+        toast.className = "fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-3 rounded-lg shadow-xl opacity-100 z-50 transition-opacity duration-300";
+      } else {
+        toast.className = "fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl opacity-100 z-50 transition-opacity duration-300";
+      }
 
-      const icons = {
-        success: 'fa-circle-check',
-        error: 'fa-circle-xmark',
-        warning: 'fa-triangle-exclamation',
-        info: 'fa-circle-info'
-      };
-
-      toast.className = `fixed top-5 right-5 z-50 flex items-center p-4 text-white rounded-lg shadow-lg ${colors[type]}`;
-      icon.className = `fa-solid ${icons[type]} mr-3 text-xl`;
-      msg.innerText = message;
-
-      toast.classList.remove('hidden');
       setTimeout(() => {
-        toast.classList.add('hidden');
-      }, 3000);
+        toast.classList.replace('opacity-100', 'opacity-0');
+      }, 3500);
     }
   </script>
 </body>
