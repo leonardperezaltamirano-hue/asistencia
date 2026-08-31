@@ -20,7 +20,10 @@
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
       <div class="flex items-center space-x-3">
         <i class="fa-solid fa-qrcode text-3xl text-indigo-200"></i>
-        <h1 class="text-xl font-bold tracking-wide">Control de Asistencia QR</h1>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">Control de Asistencia QR</h1>
+          <p class="text-xs text-indigo-200">Versión 1.1</p>
+        </div>
       </div>
       <!-- Tabs Navigation -->
       <nav class="flex space-x-1 sm:space-x-2 bg-indigo-800 p-1 rounded-lg text-sm font-medium">
@@ -83,17 +86,21 @@
         <!-- Manual Input / Status Column -->
         <div class="space-y-6">
           <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
-            <h3 class="text-md font-bold text-slate-700 mb-3">Ingreso Manual</h3>
+            <h3 class="text-md font-bold text-slate-700 mb-3 flex items-center">
+              <i class="fa-solid fa-keyboard text-indigo-600 mr-2"></i> Ingreso Manual
+            </h3>
             <div class="space-y-3">
               <input type="text" id="manual-codigo" placeholder="Código de Estudiante" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
-              <button onclick="marcarManual()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition">
-                Marcar Asistencia
+              <button onclick="marcarManual()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center">
+                <i class="fa-solid fa-check mr-2"></i> Marcar Asistencia
               </button>
             </div>
           </div>
 
           <div id="last-scan-card" class="bg-white rounded-xl shadow-md p-5 border border-slate-200 hidden">
-            <h3 class="text-md font-bold text-slate-700 mb-2">Último Registro</h3>
+            <h3 class="text-md font-bold text-slate-700 mb-2 flex items-center">
+              <i class="fa-solid fa-clock-rotate-left text-indigo-600 mr-2"></i> Último Registro
+            </h3>
             <div id="last-scan-details" class="text-sm space-y-1"></div>
           </div>
         </div>
@@ -122,8 +129,8 @@
                 <option value="Noche">Noche</option>
               </select>
             </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
-              Guardar Curso
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center">
+              <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Curso
             </button>
           </form>
         </div>
@@ -160,8 +167,8 @@
                 </select>
               </div>
             </div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
-              Guardar Estudiante
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center">
+              <i class="fa-solid fa-user-plus mr-2"></i> Guardar Estudiante
             </button>
           </form>
         </div>
@@ -170,7 +177,9 @@
 
       <!-- Carnet / QR Card Generator Output -->
       <div class="bg-white rounded-xl shadow-md p-5 border border-slate-200">
-        <h2 class="text-lg font-bold text-slate-700 mb-4">Generador de Tarjeta QR</h2>
+        <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center">
+          <i class="fa-solid fa-id-card text-indigo-600 mr-2"></i> Generador de Tarjeta QR
+        </h2>
         <div class="flex flex-col sm:flex-row items-center gap-6">
           <div id="qrcode" class="p-3 bg-white border border-slate-200 rounded-lg shadow-inner"></div>
           <div id="qr-info" class="text-sm space-y-2 text-slate-600">
@@ -204,7 +213,7 @@
           </div>
         </div>
 
-        <button onclick="generarInforme()" class="w-full sm:w-auto px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition">
+        <button onclick="generarInforme()" class="w-full sm:w-auto px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition flex items-center justify-center">
           <i class="fa-solid fa-magnifying-glass mr-2"></i> Generar Reporte
         </button>
       </div>
@@ -243,7 +252,6 @@
   <!-- SCRIPT LÓGICA -->
   <script>
     // CONFIGURACIÓN API GOOGLE APPS SCRIPT
-    // Reemplaza con la URL pública de tu Despliegue Web Executable de Google Apps Script
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdM8Vqn18Vp9Vuz7-SX0kcUDJY1nXjKDa5DjvgIIa2PNEr3JVW7vrFNVSOgclfA2PJ/exec";
 
     let html5QrCode = null;
@@ -429,7 +437,6 @@
       const hora = ahora.toTimeString().split(' ')[0];
       const tipo = document.getElementById('scan-tipo').value;
 
-      // Evaluar Estado: A Tiempo o Atraso (Ejemplo: Entrada después de las 08:00:00 es Atraso)
       let estado = 'A Tiempo';
       if (tipo === 'Entrada' && hora > '08:00:00') {
         estado = 'Atraso';
@@ -451,7 +458,6 @@
       if (res.status === 'success') {
         showToast(res.message, "success");
         
-        // Mostrar Card
         const card = document.getElementById('last-scan-card');
         card.classList.remove('hidden');
         document.getElementById('last-scan-details').innerHTML = `
@@ -464,7 +470,7 @@
       }
     }
 
-    // CORRECCIÓN: FUNCIÓN PARA REPORTES CON MANEJO DE FECHA Y HORA
+    // CORRECCIÓN: FUNCIÓN DE REPORTES CON CORRECCIÓN DE FECHA/HORA
     async function generarInforme() {
       const payload = {
         fechaInicio: document.getElementById('rep-fecha-inicio').value,
@@ -480,7 +486,6 @@
 
       if (res.data && res.data.length > 0) {
         res.data.forEach(r => {
-          // Extraer fecha limpia en formato YYYY-MM-DD
           let fechaFormateada = r.fecha;
           if (r.fecha.includes('T')) {
             fechaFormateada = r.fecha.split('T')[0];
@@ -507,7 +512,7 @@
       }
     }
 
-    // COMPONENTE TOAST DE NOTIFICACIÓN
+    // TOAST
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toast-message');
