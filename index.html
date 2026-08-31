@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Control de Asistencia QR</title>
+  <title>Sistema de Control de Asistencia QR - v1.0</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome for Icons -->
@@ -22,7 +22,7 @@
         <i class="fa-solid fa-qrcode text-3xl text-indigo-200"></i>
         <div>
           <h1 class="text-xl font-bold tracking-wide">Control de Asistencia QR</h1>
-          <p class="text-xs text-indigo-200">Versión 1.1</p>
+          <p class="text-xs text-indigo-200">Versión 1.0</p>
         </div>
       </div>
       <!-- Tabs Navigation -->
@@ -470,7 +470,7 @@
       }
     }
 
-    // CORRECCIÓN: FUNCIÓN DE REPORTES CON CORRECCIÓN DE FECHA/HORA
+    // OBTENER REPORTE CON TRATAMIENTO DE FECHA/HORA
     async function generarInforme() {
       const payload = {
         fechaInicio: document.getElementById('rep-fecha-inicio').value,
