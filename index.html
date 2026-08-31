@@ -150,7 +150,7 @@
               <div>
                 <label class="text-xs font-semibold text-gray-600">Curso</label>
                 <select id="est-curso" required class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
-                  </select>
+                </select>
               </div>
               <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-medium transition">
                 Registrar Estudiante
@@ -179,7 +179,7 @@
                 </tr>
               </thead>
               <tbody id="tabla-estudiantes-body" class="divide-y">
-                </tbody>
+              </tbody>
             </table>
           </div>
         </div>
@@ -196,7 +196,7 @@
           <div>
             <label class="text-xs font-semibold text-gray-600">Seleccionar Estudiante</label>
             <select id="qr-select-estudiante" onchange="renderizarCredencial()" class="w-full p-2 border rounded-lg text-sm mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
-              </select>
+            </select>
           </div>
           <div class="flex items-end">
             <button onclick="window.print()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 px-4 rounded-lg font-medium shadow flex items-center justify-center gap-2">
@@ -337,7 +337,7 @@
               </tr>
             </thead>
             <tbody id="tabla-reportes-body" class="divide-y">
-              </tbody>
+            </tbody>
           </table>
         </div>
       </div>
@@ -569,6 +569,37 @@
       procesarMarcadoAsistencia(codigoProcesado);
     }
 
+    // --- LÓGICA DE ESTADOS Y CONFIGURACIÓN DE HORARIOS ---
+    function obtenerEstadoCalculado(horaMarcadaStr, turnoConfig, tipoEvento) {
+      const [hM, mM] = horaMarcadaStr.split(':').map(Number);
+      const minMarcados = hM * 60 + mM;
+
+      const [hEnt, mEnt] = turnoConfig.entrada.split(':').map(Number);
+      const minEntrada = hEnt * 60 + mEnt;
+      const minEntradaConTolerancia = minEntrada + parseInt(turnoConfig.tolerancia || 0);
+
+      const [hSal, mSal] = turnoConfig.salida.split(':').map(Number);
+      const minSalida = hSal * 60 + mSal;
+
+      if (tipoEvento === "Entrada") {
+        if (minMarcados < minEntrada) {
+          return "Ingreso Anticipado";
+        } else if (minMarcados > minEntradaConTolerancia) {
+          return "Retraso";
+        }
+        return "Ingreso Normal";
+      } else if (tipoEvento === "Salida") {
+        if (minMarcados < minSalida) {
+          return "Salida Anticipada";
+        } else if (minMarcados > minSalida) {
+          return "Salida Tardía";
+        }
+        return "Salida Normal";
+      }
+
+      return "A Tiempo";
+    }
+
     async function procesarMarcadoAsistencia(codigo) {
       const estudiante = estudiantes.find(e => e.codigo.toString().trim() === codigo);
       if (!estudiante) {
@@ -584,17 +615,7 @@
       if (estudiante.turno === 'Tarde') turnoConfig = horariosConfig.tarde;
       if (estudiante.turno === 'Noche') turnoConfig = horariosConfig.noche;
 
-      let estado = "A Tiempo";
-
-      if (tipo === "Entrada") {
-        const [hEnt, mEnt] = turnoConfig.entrada.split(':').map(Number);
-        const limite = new Date();
-        limite.setHours(hEnt, mEnt + parseInt(turnoConfig.tolerancia), 59);
-        
-        if (ahora > limite) {
-          estado = "Con Atraso";
-        }
-      }
+      const estado = obtenerEstadoCalculado(horaActualStr, turnoConfig, tipo);
 
       const payload = {
         fecha: ahora.toLocaleDateString(),
@@ -609,10 +630,24 @@
       const res = await apiPost('marcarAsistencia', payload);
       
       if (res.status === 'success') {
-        showToast(`¡MARCADO! ${estudiante.nombre} (${estado})`, estado === 'A Tiempo' ? 'success' : 'warning');
+        const esAlerta = estado === 'Retraso' || estado === 'Salida Anticipada';
+        showToast(`¡MARCADO! ${estudiante.nombre} (${estado})`, esAlerta ? 'warning' : 'success');
         agregarLogLectura(payload);
       } else {
         showToast(res.message || "Marcado Duplicado", "warning");
+      }
+    }
+
+    function getBadgeClass(estado) {
+      switch (estado) {
+        case 'Retraso':
+        case 'Salida Anticipada':
+          return 'bg-red-100 text-red-800';
+        case 'Ingreso Anticipado':
+        case 'Salida Tardía':
+          return 'bg-amber-100 text-amber-800';
+        default:
+          return 'bg-green-100 text-green-800';
       }
     }
 
@@ -620,7 +655,7 @@
       const container = document.getElementById('recent-logs');
       if (container.children[0]?.tagName === 'P') container.innerHTML = '';
 
-      const badgeColor = p.estado === 'A Tiempo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+      const badgeColor = getBadgeClass(p.estado);
       
       const item = document.createElement('div');
       item.className = 'p-3 bg-gray-50 border rounded-lg flex justify-between items-center text-xs animate-pulse';
@@ -699,6 +734,7 @@
 
       if (res.data && res.data.length > 0) {
         res.data.forEach(r => {
+          const badgeColor = getBadgeClass(r.estado);
           tbody.innerHTML += `
             <tr class="hover:bg-gray-50">
               <td class="p-3">${r.fecha}</td>
@@ -707,7 +743,7 @@
               <td class="p-3">${r.curso}</td>
               <td class="p-3">${r.tipo}</td>
               <td class="p-3">
-                <span class="px-2 py-1 text-xs rounded-full ${r.estado === 'A Tiempo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                <span class="px-2 py-1 text-xs rounded-full font-semibold ${badgeColor}">
                   ${r.estado}
                 </span>
               </td>
